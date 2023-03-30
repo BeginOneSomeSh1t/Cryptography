@@ -15,21 +15,21 @@ namespace std
 {
 	template<typename _Ty>
 	using min_max = tuple<_Ty, _Ty>;
-
+	/*Returns a tuple with min and max elements*/
 	template<typename _Ty>
-	min_max<_Ty> get_minmax_element(_Ty _First, _Ty _Last)
+	min_max<_Ty> get_minmax_element(_Ty _First, _Ty _Last) noexcept
 	{
 		if (_First > _Last)
 			return { _Last, _First };
 		else if (_First < _Last)
 			return { _First, _Last };
-		else if (_First == _Last)
+		else 
 			return { (_Ty)0, (_Ty)0 };
 	}
 
-
+	/*Allows to compare two values with the passed error tolerance*/
 	template<typename _Ty>
-	static bool nearly_equal(_Ty _A, _Ty _B, double _Err)
+	static bool nearly_equal(_Ty _A, _Ty _B, double _Err) noexcept
 	{
 		if (_A == _B)
 			return true;
@@ -40,33 +40,24 @@ namespace std
 				return false;
 		
 	}
-
+	/*Pows the argument in 2*/
 	template<typename _Ty>
-	_Ty pow(_Ty _Init)
+	_Ty pow(_Ty _Init) noexcept
 	{
 		return _Init * _Init;
 	}
 	
+	using primes = std::vector<size_t>;
+
 	/*Find all primes up to given limit by using Sieve of Eratosthenes*/
-	static std::vector<std::size_t> generate_prime_numbers(std::size_t _Count)
+	static primes generate_prime_numbers(std::size_t _Count) noexcept
 	{
 		assert(_Count > 1 && "Count must be bigger than 1");
-
-		// lost of consecutive_nums 2,3,4...n
-		std::vector<std::size_t> consecutive_nums;
-
-		consecutive_nums.reserve(_Count);
-
-		// populate the vec
-		for (size_t i{ 2u }; i <= _Count; ++i)
-			consecutive_nums.push_back(i);
-
+	
 		std::map<size_t, bool> bool_map;
 		// initially all elements in the map set to true
-		for (auto it{ std::begin(consecutive_nums) }; it != std::end(consecutive_nums); ++it)
-			bool_map[*it] = true;
-
-
+		for (size_t i{2u}; i <= _Count; ++i)
+			bool_map[i] = true;
 
 		for (size_t i{ 2u }; i <= std::sqrt(_Count); ++i)
 			if (bool_map[i])
@@ -76,7 +67,7 @@ namespace std
 					j = std::pow(i) + (k * i);
 				}
 
-		std::vector<std::size_t> results;
+		primes results;
 
 		for (auto [num, isPrime] : bool_map)
 			if (isPrime)
@@ -85,8 +76,35 @@ namespace std
 		return results;
 	}
 
-
-
+	using prime_range = std::pair<size_t, size_t>;
+	/*Generate and distribute prime numbers.*/
+	class distribute_prime_numbers
+	{
+	public:
+		/*Generates primes from the passed count.*/
+		explicit distribute_prime_numbers(size_t _Count)
+			: 
+			p{generate_prime_numbers(_Count)},
+			pr{0u, p.size() - 1}
+		{}
+		/*Generates primes from the passed count and sets the minimum limit for index distribution*/
+		explicit distribute_prime_numbers(size_t _First, size_t _Count)
+			:
+			p{ generate_prime_numbers(_Count) },
+			pr{ _First, p.size() - 1}
+		{}
+		/*Returns random prime number from generated primes*/
+		size_t random() const
+		{
+			random_device r;
+			uniform_int_distribution<size_t> index_dist{pr.first, pr.second};
+			auto rand_indx{ index_dist(r) };
+			return p.at(rand_indx);
+		}
+	public:
+		primes p;
+		prime_range pr;
+	};
 }
 
 
