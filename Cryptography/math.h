@@ -117,6 +117,11 @@ namespace std
 	{
 		std::vector<_Ty> output;
 		auto z{ 2 };
+		if (_Init <= 2)
+		{
+			output.push_back(2);
+			return output;
+		}
 
 		while (z * z <= _Init)
 			if (_Init % z == 0)

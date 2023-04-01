@@ -192,13 +192,13 @@ namespace crypto
 		return prev_res;
 	}
 
-	/*tuple<public key, private key, encrypted message>*/
-	using rsa_bundle = std::tuple<size_t, size_t, std::string>;
+	/*tuple<public key, private key, mod,  encrypted message>*/
+	using rsa_bundle = std::tuple<size_t, size_t, size_t, std::string>;
 
 	static rsa_bundle rsa_cipher(const std::string& _Msg)
 	{
 		std::random_device r;
-		std::uniform_int_distribution<size_t> size_dist{2u, 100u};
+		std::uniform_int_distribution<size_t> size_dist{10u, 10000u};
 		std::distribute_prime_numbers prime_dist{ size_dist(r) };
 
 		// two random primes
@@ -211,7 +211,7 @@ namespace crypto
 		auto prime_factors{ std::factors(prime) };
 
 		// distribute other factors that would not include the factor of prime
-		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 100u };
+		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 10000u };
 		
 		std::vector<size_t> e_factors;
 		// define random amount of factors
@@ -228,7 +228,7 @@ namespace crypto
 		for (auto it{ std::begin(e_factors) }; it != std::end(e_factors); ++it)
 			factorized_decimal *= std::pow(*it, pows_dist(r));
 		
-		std::uniform_int_distribution<int> integer_for_prime_dist{ 2, 1000 };
+		std::uniform_int_distribution<int> integer_for_prime_dist{ 20, 10000 };
 		std::distribute_prime_numbers egcd_primes{ static_cast<size_t>(integer_for_prime_dist(r))};
 		auto [gcd, x, y] {std::egcd(egcd_primes.random(), egcd_primes.random())};
 
@@ -239,12 +239,12 @@ namespace crypto
 		// decimal message
 		auto del_msg{ std::binary::to_integer(bin_msg.binary_string) };
 
-		auto c{ static_cast<size_t>(std::fmod(std::pow(del_msg, d), n))};
+		auto c{ static_cast<int>(std::fmod(std::pow(del_msg, d), n))};
 		
 		std::binary output{ c };
 		std::string encrypted_msg( output.operator std::string() );
 
-		return std::make_tuple(factorized_decimal, d, encrypted_msg);
+		return std::make_tuple(factorized_decimal, d, n, encrypted_msg);
 
 	}
 

@@ -74,18 +74,32 @@ namespace std
 			}
 			return previous_double;
 		}
+		operator size_t() const
+		{
+			vector<size_t> binary_int;
+			binary_int.reserve(binary_string.size());
+			transform(begin(binary_string), end(binary_string), back_inserter(binary_int), [](char c) { return atoi(&c); });
+
+			int previous_double{ 0 };
+
+			for (const auto i : binary_int)
+			{
+				previous_double = (previous_double * 2) + i;
+			}
+			return previous_double;
+		}
 		operator string()
 		{
 			string out;
-			auto pace{ binary_string.size() / 2 };
+			auto pace{ std::factors(binary_string.size()).front()};
 			// spliting the string into octanes, accumulate them and convert to decimals to do chars
 			for (auto it{ begin(binary_string) }; it < end(binary_string); it = next(it, pace))
 			{
-				string octane;
+				string bit;
 
-				copy(it, next(it, pace), back_inserter(octane));
+				copy(it, next(it, pace), back_inserter(bit));
 
-				char put_char = static_cast<char>(to_integer(octane));
+				char put_char = static_cast<char>(to_integer(bit));
 				out += put_char;
 			}
 			return out;
