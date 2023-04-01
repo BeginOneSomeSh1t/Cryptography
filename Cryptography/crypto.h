@@ -9,103 +9,10 @@
 #include <tuple>
 #include <random>
 #include <cassert>
+#include <numeric>
 #include <map>
-
-namespace std
-{
-	template<typename _Ty>
-	using min_max = tuple<_Ty, _Ty>;
-	/*Returns a tuple with min and max elements*/
-	template<typename _Ty>
-	min_max<_Ty> get_minmax_element(_Ty _First, _Ty _Last) noexcept
-	{
-		if (_First > _Last)
-			return { _Last, _First };
-		else if (_First < _Last)
-			return { _First, _Last };
-		else 
-			return { (_Ty)0, (_Ty)0 };
-	}
-
-	/*Allows to compare two values with the passed error tolerance*/
-	template<typename _Ty>
-	static bool nearly_equal(_Ty _A, _Ty _B, double _Err) noexcept
-	{
-		if (_A == _B)
-			return true;
-		else
-			if (auto [min, max] {get_minmax_element<_Ty>(_A, _B)}; (max - min) <= _Err)
-				return true;
-			else
-				return false;
-		
-	}
-	/*Pows the argument in 2*/
-	template<typename _Ty>
-	_Ty pow(_Ty _Init) noexcept
-	{
-		return _Init * _Init;
-	}
-	
-	using primes = std::vector<size_t>;
-
-	/*Find all primes up to given limit by using Sieve of Eratosthenes*/
-	static primes generate_prime_numbers(std::size_t _Count) noexcept
-	{
-		assert(_Count > 1 && "Count must be bigger than 1");
-	
-		std::map<size_t, bool> bool_map;
-		// initially all elements in the map set to true
-		for (size_t i{2u}; i <= _Count; ++i)
-			bool_map[i] = true;
-
-		for (size_t i{ 2u }; i <= std::sqrt(_Count); ++i)
-			if (bool_map[i])
-				for (size_t j = std::pow(i), k{ 1u }; j <= _Count; ++k)
-				{
-					bool_map[j] = false;
-					j = std::pow(i) + (k * i);
-				}
-
-		primes results;
-
-		for (auto [num, isPrime] : bool_map)
-			if (isPrime)
-				results.push_back(num);
-
-		return results;
-	}
-
-	using prime_range = std::pair<size_t, size_t>;
-	/*Generate and distribute prime numbers.*/
-	class distribute_prime_numbers
-	{
-	public:
-		/*Generates primes from the passed count.*/
-		explicit distribute_prime_numbers(size_t _Count)
-			: 
-			p{generate_prime_numbers(_Count)},
-			pr{0u, p.size() - 1}
-		{}
-		/*Generates primes from the passed count and sets the minimum limit for index distribution*/
-		explicit distribute_prime_numbers(size_t _First, size_t _Count)
-			:
-			p{ generate_prime_numbers(_Count) },
-			pr{ _First, p.size() - 1}
-		{}
-		/*Returns random prime number from generated primes*/
-		size_t random() const
-		{
-			random_device r;
-			uniform_int_distribution<size_t> index_dist{pr.first, pr.second};
-			auto rand_indx{ index_dist(r) };
-			return p.at(rand_indx);
-		}
-	public:
-		primes p;
-		prime_range pr;
-	};
-}
+#include "math.h"
+#include "binary.h"
 
 
 namespace crypto
@@ -255,7 +162,7 @@ namespace crypto
 		//distribute p and g
 		auto p{ dist_p(r) };
 		auto g{ dist_g(r) };
-
+		
 		std::vector<_Ty> comptd_secrts;
 		comptd_secrts.reserve(secrts_vec.size());
 
@@ -283,6 +190,62 @@ namespace crypto
 		}
 		// to this moment prev_res should be match to one of the results
 		return prev_res;
+	}
+
+	/*tuple<public key, private key, encrypted message>*/
+	using rsa_bundle = std::tuple<size_t, size_t, std::string>;
+
+	static rsa_bundle rsa_cipher(const std::string& _Msg)
+	{
+		std::random_device r;
+		std::uniform_int_distribution<size_t> size_dist{2u, 100u};
+		std::distribute_prime_numbers prime_dist{ size_dist(r) };
+
+		// two random primes
+		auto p{ prime_dist.random() }, q{ prime_dist.random() };
+		// totiend dist
+		auto n{ p * q };
+
+		auto prime{ std::totient(n) };
+		// gather factors to make sure we're not repeat them
+		auto prime_factors{ std::factors(prime) };
+
+		// distribute other factors that would not include the factor of prime
+		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 100u };
+		
+		std::vector<size_t> e_factors;
+		// define random amount of factors
+		std::uniform_int_distribution<int> fac_amount_dist{ 2, 10 };
+		auto fac_amount{ fac_amount_dist(r) };
+		// populate the vector of factors
+		e_factors.reserve(fac_amount);
+		for (int i{ 0 }; i < fac_amount; ++i)
+			e_factors.push_back(distinct_prime_dist.random());
+
+		std::uniform_int_distribution<int> pows_dist{ 2, 8 };
+		// public key
+		size_t factorized_decimal{ 1 };
+		for (auto it{ std::begin(e_factors) }; it != std::end(e_factors); ++it)
+			factorized_decimal *= std::pow(*it, pows_dist(r));
+		
+		std::uniform_int_distribution<int> integer_for_prime_dist{ 2, 1000 };
+		std::distribute_prime_numbers egcd_primes{ static_cast<size_t>(integer_for_prime_dist(r))};
+		auto [gcd, x, y] {std::egcd(egcd_primes.random(), egcd_primes.random())};
+
+		// private key
+		auto d{ std::positive(x, y) };
+
+		std::binary bin_msg{ _Msg };
+		// decimal message
+		auto del_msg{ std::binary::to_integer(bin_msg.binary_string) };
+
+		auto c{ static_cast<size_t>(std::fmod(std::pow(del_msg, d), n))};
+		
+		std::binary output{ c };
+		std::string encrypted_msg( output.operator std::string() );
+
+		return std::make_tuple(factorized_decimal, d, encrypted_msg);
+
 	}
 
 }
