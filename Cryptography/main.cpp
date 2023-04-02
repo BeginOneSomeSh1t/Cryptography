@@ -12,7 +12,7 @@
 int main()
 {
 	
-	auto [public_key, private_key,n ,msg] {crypto::rsa_cipher("Hello World")};
+	/*auto [public_key, private_key,n ,msg] {crypto::rsa_cipher("Hello World")};
 
 
 	std::cout << "PubK: " << public_key << '\n'
@@ -26,7 +26,28 @@ int main()
 
 	std::binary to_str{ static_cast<size_t>(value)};
 
-	std::cout << "Message: " << to_str.operator std::string();
+	std::cout << "Message: " << to_str.operator std::string();*/
+
+
+	
+	std::bitset<32> binary_msg;
+	
+	std::string str{ "String" };
+
+	for (int i{0}; i < str.length(); ++i)
+	{
+		binary_msg[i] = str[i];
+	}
+
+
+
+	std::cout << binary_msg.to_string() << '\n';
+	std::cout << binary_msg.to_ulong() << '\n';
+	
+	
+	
+	
+	
 	
 }
 
