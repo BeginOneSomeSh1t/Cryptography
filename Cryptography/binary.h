@@ -9,102 +9,109 @@
 
 namespace std
 {
+
+	using binary_container = std::vector<bool>;
+
+	template<size_t _Size>
 	struct binary
 	{
-		string binary_string;
-		explicit binary(const string& _Init)
+		enum _Converter_Type
 		{
-			for (auto& c : _Init)
-				binary_string += bitset<8>(c).to_string();
-		}
-		explicit binary(int _Del)
+			_String,
+			_Binary,
+			_Ullong,
+		};
+		binary_container _Mask;
+		explicit binary(const string& str)
 		{
-			//reversed string of a correct binary number
-			string bin;
-			// short division by two with reaminder being a binary 0 or 1
-			while (_Del >= 1)
+			size_t char_in_del{ 0u };
+			// reserve place in mask
+			_Mask.reserve(str.size() * _Size);
+			// convert char by char string to binary_container
+			for (char c : str)
 			{
-				bin += std::to_string(_Del % 2);
-				_Del /= 2;
+				char_in_del = static_cast<size_t>(c);
+				auto char_bytes{ to_binary(char_in_del) };
+				_Mask.insert(end(_Mask), make_move_iterator(begin(char_bytes)), make_move_iterator(end(char_bytes)));
 			}
-			// inreverse and copy the string to binary_string
-			copy(rbegin(bin), rend(bin), back_inserter(binary_string));
 		}
 		explicit binary(size_t _Del)
+			:
+			_Mask{to_binary(_Del)}
+		{}
+		/*Converts a decimal unsigned number to a binary container*/
+		static binary_container to_binary(std::size_t _Del)
 		{
-			//reversed string of a correct binary number
-			string bin;
-			// short division by two with reaminder being a binary 0 or 1
-			while (_Del >= 1)
+ 			binary_container temp;
+			while(_Del >= 1)
 			{
-				bin += std::to_string(_Del % 2);
+				temp.push_back(static_cast<bool>(_Del % 2));
 				_Del /= 2;
 			}
-			// inreverse and copy the string to binary_string
-			copy(rbegin(bin), rend(bin), back_inserter(binary_string));
-		}
-		static int to_integer(const string& _BinStr) 
-		{
-			vector<int> binary_int;
-			binary_int.reserve(_BinStr.size());
-			transform(begin(_BinStr), end(_BinStr), back_inserter(binary_int), [](char c) { return atoi(&c); });
-			int previous_double{ 0 };
-
-			for (const auto i : binary_int)
+			if (temp.size() < _Size)
 			{
-				previous_double = (previous_double * 2) + i;
+				auto size_dif{ _Size - temp.size() };
+				temp.reserve(size_dif);
+				for (size_t i{ 0u }; i < size_dif; ++i)
+					// push back 0
+					temp.push_back(false);
+				
 			}
-			return previous_double;
+			binary_container output;
+			output.reserve(temp.size());
+			copy(rbegin(temp), rend(temp), back_inserter(output));
+			return output;
 		}
-		int to_integer() const
+		/*Converts binary container to a decimal unsigned number*/
+		static size_t to_ullong(const binary_container& _Bin)
 		{
-			return int{ *this };
-		}
-		operator int() const
-		{
-			vector<int> binary_int;
-			binary_int.reserve(binary_string.size());
-			transform(begin(binary_string), end(binary_string), back_inserter(binary_int), [](char c) { return atoi(&c); });
-			
-			int previous_double{ 0 };
-
-			for (const auto i : binary_int)
+			size_t out{ 0u };
+			for (auto b : _Bin)
 			{
-				previous_double = (previous_double * 2) + i;
-			}
-			return previous_double;
-		}
-		operator size_t() const
-		{
-			vector<size_t> binary_int;
-			binary_int.reserve(binary_string.size());
-			transform(begin(binary_string), end(binary_string), back_inserter(binary_int), [](char c) { return atoi(&c); });
-
-			int previous_double{ 0 };
-
-			for (const auto i : binary_int)
-			{
-				previous_double = (previous_double * 2) + i;
-			}
-			return previous_double;
-		}
-		operator string()
-		{
-			string out;
-			auto pace{ std::factors(binary_string.size()).front()};
-			// spliting the string into octanes, accumulate them and convert to decimals to do chars
-			for (auto it{ begin(binary_string) }; it < end(binary_string); it = next(it, pace))
-			{
-				string bit;
-
-				copy(it, next(it, pace), back_inserter(bit));
-
-				char put_char = static_cast<char>(to_integer(bit));
-				out += put_char;
+				out = (out * 2u) + static_cast<size_t>(b);
 			}
 			return out;
 		}
+		size_t to_ullong() const
+		{
+			return size_t{ to_ullong(_Mask) };
+		}
+		/*Convert binary container do a string of 1s and 0s*/
+		static string to_string(const binary_container& _Bin)
+		{
+			string out;
+			transform(begin(_Bin), end(_Bin), back_inserter(out), [](auto b) {return *std::to_string(static_cast<size_t>(b)).c_str(); });
+			return out;
+		}
+		/*Convert this object's mask to a string of binary container*/
+		string to_string(_Converter_Type _Ty = _Binary) const
+		{
+			switch (_Ty)
+			{
+			case _Converter_Type::_Binary: return string{ to_string(_Mask) };
+										 break;
+			case _Converter_Type::_String: return string{to_string(_Mask, _Size)};
+										 break;
+			case _Converter_Type::_Ullong: return string{std::to_string(to_ullong(_Mask))};
+			default:
+				break;
+			}
+		}
+		static string to_string(const binary_container& _Bin, size_t _Bin_Size)
+		{
+			string out;
+			for (auto it{ begin(_Bin) }; it != end(_Bin); it += _Bin_Size)
+			{
+				auto ch{ static_cast<char>(to_ullong(binary_container{it, it + _Bin_Size})) };
+				out += ch;
+			}
+			return out;
+		}
+
 	};
+	
+	
+
 
 	
 }

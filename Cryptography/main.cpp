@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "math.h"
 #include "binary.h"
-#include "crypto.h"
+
 
 
 int main()
@@ -28,24 +28,15 @@ int main()
 
 	std::cout << "Message: " << to_str.operator std::string();*/
 
-
-	
-	std::bitset<32> binary_msg;
-	
-	std::string str{ "String" };
-
-	for (int i{0}; i < str.length(); ++i)
-	{
-		binary_msg[i] = str[i];
-	}
-
-
-
-	std::cout << binary_msg.to_string() << '\n';
-	std::cout << binary_msg.to_ulong() << '\n';
 	
 	
+	std::binary<8> bin{"String"};
 	
+	std::cout << "Ulong: " << bin.to_ullong() << '\n';
+	std::cout << "Binary String: " << bin.to_string(decltype(bin)::_Binary) << '\n';
+	std::cout << "Normal String: " << bin.to_string(decltype(bin)::_String) << '\n';
+	std::cout << "Ulong String: " << bin.to_string(decltype(bin)::_Ullong) << '\n';
+
 	
 	
 	
