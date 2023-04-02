@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "math.h"
 #include "binary.h"
-
+#include "crypto.h"
 
 
 int main()
@@ -17,26 +17,19 @@ int main()
 
 	std::cout << "PubK: " << public_key << '\n'
 		<< "PrivL: " << private_key << '\n'
-		<< "Encrptd: " << msg << '\n';
-
-	std::binary bin{ msg };
-	std::size_t cipher_del{ bin };
-
-	auto value{ std::fmod(std::pow(cipher_del, private_key), n) };
-
-	std::binary to_str{ static_cast<size_t>(value)};
-
-	std::cout << "Message: " << to_str.operator std::string();*/
+		<< "Encrptd: " << msg << '\n';*/
 
 	
-	
-	std::binary<8> bin{"String"};
-	
-	std::cout << "Ulong: " << bin.to_ullong() << '\n';
-	std::cout << "Binary String: " << bin.to_string(decltype(bin)::_Binary) << '\n';
-	std::cout << "Normal String: " << bin.to_string(decltype(bin)::_String) << '\n';
-	std::cout << "Ulong String: " << bin.to_string(decltype(bin)::_Ullong) << '\n';
+	/*size_t big_del{ 128u };
+	std::binary<8> bin{ big_del };
+	std::string bin_str{ bin.to_string(decltype(bin)::_String) };
 
+	std::binary<8> bin_dec{ bin_str };
+	std::cout << bin_dec.to_ullong();*/
+	
+	
+	
+	
 	
 	
 	

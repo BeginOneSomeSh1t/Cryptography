@@ -211,7 +211,7 @@ namespace crypto
 		auto prime_factors{ std::factors(prime) };
 
 		// distribute other factors that would not include the factor of prime
-		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 10000u };
+		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 100u };
 		
 		std::vector<size_t> e_factors;
 		// define random amount of factors
@@ -224,25 +224,27 @@ namespace crypto
 
 		std::uniform_int_distribution<int> pows_dist{ 2, 8 };
 		// public key
-		size_t factorized_decimal{ 1 };
-		for (auto it{ std::begin(e_factors) }; it != std::end(e_factors); ++it)
-			factorized_decimal *= std::pow(*it, pows_dist(r));
+		std::uniform_int_distribution<size_t> fac_times_dist{ 2, e_factors.size() - 1};
+ 		size_t factorized_decimal{ 1 };
+		auto fact_times{ fac_times_dist(r) };
+		for (std::size_t i{0u}; i < fact_times; ++i)
+			factorized_decimal += std::pow(e_factors[i], pows_dist(r));
 		
-		std::uniform_int_distribution<int> integer_for_prime_dist{ 20, 10000 };
+		std::uniform_int_distribution<int> integer_for_prime_dist{ 20, 100 };
 		std::distribute_prime_numbers egcd_primes{ static_cast<size_t>(integer_for_prime_dist(r))};
 		auto [gcd, x, y] {std::egcd(egcd_primes.random(), egcd_primes.random())};
 
 		// private key
 		auto d{ std::positive(x, y) };
 
-		std::binary bin_msg{ _Msg };
+		std::binary<32> bin_msg{ _Msg };
 		// decimal message
-		auto del_msg{ std::binary::to_integer(bin_msg.binary_string) };
+		auto del_msg{ bin_msg.to_ullong()};
 
-		auto c{ static_cast<int>(std::fmod(std::pow(del_msg, d), n))};
+		auto c{ static_cast<size_t>(std::fmod(std::pow(del_msg, d), n))};
 		
-		std::binary output{ c };
-		std::string encrypted_msg( output.operator std::string() );
+		std::binary<32> output{ c };
+		std::string encrypted_msg( output.to_string(decltype(output)::_String) );
 
 		return std::make_tuple(factorized_decimal, d, n, encrypted_msg);
 

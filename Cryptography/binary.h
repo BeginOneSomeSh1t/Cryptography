@@ -24,13 +24,13 @@ namespace std
 		binary_container _Mask;
 		explicit binary(const string& str)
 		{
-			size_t char_in_del{ 0u };
+			int char_in_del{ 0u };
 			// reserve place in mask
 			_Mask.reserve(str.size() * _Size);
 			// convert char by char string to binary_container
 			for (char c : str)
 			{
-				char_in_del = static_cast<size_t>(c);
+				char_in_del = (int)c;
 				auto char_bytes{ to_binary(char_in_del) };
 				_Mask.insert(end(_Mask), make_move_iterator(begin(char_bytes)), make_move_iterator(end(char_bytes)));
 			}
