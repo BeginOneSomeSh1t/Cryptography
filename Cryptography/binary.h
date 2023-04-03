@@ -16,10 +16,22 @@ namespace std
 	{
 	private:
 		string _Err_Msg;
+		enum _Exception_Type
+		{
+			_Size,
+			_Unknown,
+		};
+		_Exception_Type _Type;
 	public:
 		binary_exception(const string& _Msg)
 			:
-			_Err_Msg{_Msg}
+			_Err_Msg{_Msg},
+			_Type{_Unknown}
+		{}
+		binary_exception(const string& _Msg, _Exception_Type _Ty)
+			:
+			_Err_Msg{ _Msg },
+			_Type{_Ty}
 		{}
 		const char* what() const override
 		{

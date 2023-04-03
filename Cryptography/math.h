@@ -103,7 +103,7 @@ namespace std
 	};
 
 	template<typename _Ty>
-	static auto totient(_Ty n)
+	static _Ty totient(_Ty n)
 	{
 		unsigned int result{ 1 };
 		for (int i{ 2 }; i < n; ++i)
@@ -136,18 +136,26 @@ namespace std
 	}
 
 	template<typename _Ty>
-	tuple<int, int, int> egcd(_Ty _Mx, _Ty _Nx)
+	tuple<_Ty, _Ty, _Ty> egcd(_Ty _Mx, _Ty _Nx)
 	{
 		if (_Mx == 0) {
 			return make_tuple(_Nx, 0, 1);
 		}
 
-		int gcd, x, y;
-
 		// unpack tuple returned by function into variables
-		tie(gcd, x, y) = egcd(_Nx % _Mx, _Mx);
+		auto[gcd, x, y] = egcd(_Nx % _Mx, _Mx);
 
 		return make_tuple(gcd, (y - (_Nx / _Mx) * x), x);
+	}
+
+	template<typename _Ty>
+	auto modinv(_Ty _Mx, _Ty _Nx)
+	{
+		auto [gcd, x, y] = egcd(_Mx, _Nx);
+		if (gcd != 1)
+			return (_Ty)0;
+		else
+			return x % _Nx;
 	}
 
 	template<typename _Ty>
@@ -162,6 +170,7 @@ namespace std
 		else
 			return _Nx;
 	}
+
 
 	
 }

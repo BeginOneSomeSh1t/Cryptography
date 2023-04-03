@@ -192,62 +192,39 @@ namespace crypto
 		return prev_res;
 	}
 
-	/*tuple<public key, private key, mod,  encrypted message>*/
-	using rsa_bundle = std::tuple<size_t, size_t, size_t, std::string>;
+	/*tuple<public key, private key, mod, cipher>*/
+	using rsa_bundle = std::tuple<size_t, size_t, size_t, size_t>;
 
 	static rsa_bundle rsa_cipher(const std::string& _Msg)
 	{
-		std::random_device r;
-		std::uniform_int_distribution<size_t> size_dist{10u, 1000u};
-		std::distribute_prime_numbers prime_dist{ size_dist(r) };
-
-		// two random primes
-		auto p{ prime_dist.random() }, q{ prime_dist.random() };
-		// totiend dist
+		size_t p{ 89u }, q{ 101u };
 		auto n{ p * q };
+		auto phi_mod{ std::totient(n) };
 
-		auto prime{ std::totient(n) };
-		// gather factors to make sure we're not repeat them
-		auto prime_factors{ std::factors(prime) };
+		size_t e{ 1323u };
 
-		// distribute other factors that would not include the factor of prime
-		std::distribute_prime_numbers distinct_prime_dist{ prime_factors.back(), 100u };
+		size_t d{ 0u };
+
+		std::modulus<size_t> mod;
+
+		for (size_t i{ 1u }, m{ 0u }; true; ++i)
+		{
+			m = mod(i * e, phi_mod);
+			if (m == 1)
+			{
+				d = i;
+				break;
+			}
+		}
+
 		
-		std::vector<size_t> e_factors;
-		// define random amount of factors
-		std::uniform_int_distribution<int> fac_amount_dist{ 2, 10 };
-		auto fac_amount{ fac_amount_dist(r) };
-		// populate the vector of factors
-		e_factors.reserve(fac_amount);
-		for (int i{ 0 }; i < fac_amount; ++i)
-			e_factors.push_back(distinct_prime_dist.random());
 
-		std::uniform_int_distribution<int> pows_dist{ 2, 8 };
-		// public key
-		std::uniform_int_distribution<size_t> fac_times_dist{ 2, e_factors.size() - 1};
- 		size_t factorized_decimal{ 1 };
-		auto fact_times{ fac_times_dist(r) };
-		for (std::size_t i{0u}; i < fact_times; ++i)
-			factorized_decimal += std::pow(e_factors[i], pows_dist(r));
-		
-		std::uniform_int_distribution<int> integer_for_prime_dist{ 20, 100 };
-		std::distribute_prime_numbers egcd_primes{ static_cast<size_t>(integer_for_prime_dist(r))};
-		auto [gcd, x, y] {std::egcd(egcd_primes.random(), egcd_primes.random())};
+		std::binary<16> bin_msg{ _Msg };
+		auto ullong_msg{ bin_msg.to_ullong() };
 
-		// private key
-		auto d{ std::positive(x, y) };
+		size_t c{ static_cast<size_t>(std::fmod(std::pow(ullong_msg, e), phi_mod)) };
 
-		std::binary<32> bin_msg{ _Msg };
-		// decimal message
-		auto del_msg{ bin_msg.to_ullong()};
-
-		auto c{ static_cast<size_t>(std::fmod(std::pow(del_msg, d), n))};
-		
-		std::binary<32> output{ c };
-		std::string encrypted_msg( output.to_string(decltype(output)::_String) );
-
-		return std::make_tuple(factorized_decimal, d, n, encrypted_msg);
-
+		return std::make_tuple(e, d, phi_mod, c);
 	}
 
 }
