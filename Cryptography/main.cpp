@@ -20,13 +20,12 @@ int main()
 		<< "Encrptd: " << msg << '\n';*/
 
 	
-	/*size_t big_del{ 128u };
+	size_t big_del{ 128u };
 	std::binary<8> bin{ big_del };
 	std::string bin_str{ bin.to_string(decltype(bin)::_String) };
 
 	std::binary<8> bin_dec{ bin_str };
-	std::cout << bin_dec.to_ullong();*/
-	
+	std::cout << bin_dec.to_ullong();
 	
 	
 	
