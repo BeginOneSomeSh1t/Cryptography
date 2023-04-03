@@ -198,7 +198,7 @@ namespace crypto
 	static rsa_bundle rsa_cipher(const std::string& _Msg)
 	{
 		std::random_device r;
-		std::uniform_int_distribution<size_t> size_dist{10u, 10000u};
+		std::uniform_int_distribution<size_t> size_dist{10u, 1000u};
 		std::distribute_prime_numbers prime_dist{ size_dist(r) };
 
 		// two random primes

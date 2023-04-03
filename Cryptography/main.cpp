@@ -19,13 +19,22 @@ int main()
 		<< "PrivL: " << private_key << '\n'
 		<< "Encrptd: " << msg << '\n';*/
 
-	
-	size_t big_del{ 128u };
-	std::binary<8> bin{ big_del };
-	std::string bin_str{ bin.to_string(decltype(bin)::_String) };
+	try
+	{
+		std::binary<64> bin{ "100000u" };
+		std::string bin_str{ bin.to_string(decltype(bin)::_String) };
 
-	std::binary<8> bin_dec{ bin_str };
-	std::cout << bin_dec.to_ullong();
+		std::binary<64> bin_dec{ bin_str };
+
+		std::cout << "String as ullong: " << bin_dec.to_ullong() << '\n';
+		std::cout << "String as string: " << bin_dec.to_string(decltype(bin_dec)::_String) << '\n';
+	}
+	catch (std::binary_exception ex)
+	{
+		std::cout << ex.what();
+	}
+	
+
 	
 	
 	
