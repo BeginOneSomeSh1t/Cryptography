@@ -6,143 +6,119 @@
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
+#include <cassert>
+#include "helpers.h"
 
 
 namespace std
 {
 
-	
-	class binary_exception : exception
-	{
-	private:
-		string _Err_Msg;
-		enum _Exception_Type
-		{
-			_Size,
-			_Unknown,
-		};
-		_Exception_Type _Type;
-	public:
-		binary_exception(const string& _Msg)
-			:
-			_Err_Msg{_Msg},
-			_Type{_Unknown}
-		{}
-		binary_exception(const string& _Msg, _Exception_Type _Ty)
-			:
-			_Err_Msg{ _Msg },
-			_Type{_Ty}
-		{}
-		const char* what() const override
-		{
-			return _Err_Msg.c_str();
-		}
-	};
-	
+	// ASCII numbers that formate a string
+	using ascll_string = std::vector<size_t>;
 
-	using binary_container = std::vector<bool>;
-
-	template<size_t _Size>
+	template<size_t _Size = 8u>
 	struct binary
 	{
-		enum _Converter_Type
-		{
-			_String,
-			_Binary,
-			_Ullong,
-		};
-
-		
-
-		binary_container _Mask;
-		explicit binary(const string& str)
-		{
-			size_t char_in_del{ 0u };
-			// reserve place in mask
-			_Mask.reserve(str.size() * (_Size <= 16) ? _Size / 2 : _Size / 8);
-			// convert char by char string to binary_container
-			for (unsigned char c : str)
-			{
-				char_in_del = static_cast<size_t>(c);
-				auto char_bytes{ to_binary(char_in_del, (_Size <= 16) ? _Size / 2 : _Size / 8) };
-				_Mask.insert(end(_Mask), make_move_iterator(begin(char_bytes)), make_move_iterator(end(char_bytes)));
-			}
-		}
-		explicit binary(size_t _Del)
+		string _Bin_Str;
+		binary(const string& _Msg, bool _Binary_Form = false)
 			:
-			_Mask{to_binary(_Del, _Size)}
+			_Bin_Str{_Binary_Form ? _Msg : to_binary(_Msg) }
 		{}
-		/*Converts a decimal unsigned number to a binary container*/
-		static binary_container to_binary(std::size_t _Del, std::size_t _Bin_Size = 8u)
+		binary(const size_t _Long)
+			:
+			_Bin_Str{to_binary(_Long)}
+		{}
+		binary(const ascll_string& _Codes)
+			:
+			_Bin_Str{to_binary(std::move(_Codes))}
+		{}
+	public:
+		static string to_binary(const string& _Str)
 		{
- 			binary_container temp;
-			for(size_t i{0u}; _Del >= 1 && i < _Bin_Size; ++i, _Del /= 2)
-				temp.push_back(static_cast<bool>(_Del % 2));
-			
-			if (_Del != 0)
-				throw binary_exception("Not enoght size for adding content");
-
-			if (temp.size() < _Bin_Size)
+			string out;
+			for (auto it{ std::begin(_Str) }; it != std::end(_Str); ++it)
 			{
-				auto size_dif{ _Bin_Size - temp.size() };
-				temp.reserve(size_dif);
-				for (size_t i{ 0u }; i < size_dif; ++i)
-					// push back 0
-					temp.push_back(false);
-				
+				auto octane{ std::bitset<_Size / 2>{static_cast<size_t>(*it)}.to_string()};
+				//auto test{ std::bitset<_Size>{static_cast<size_t>(*it)}.to_ullong() };
+				out += octane;
 			}
-			binary_container output;
-			output.reserve(temp.size());
-			copy(rbegin(temp), rend(temp), back_inserter(output));
-			return output;
+			return out;
 		}
-		/*Converts binary container to a decimal unsigned number*/
-		static size_t to_ullong(const binary_container& _Bin)
+		static string to_binary(const ascll_string& _Codes)
 		{
-			size_t out{ 0u };
-			for (auto b : _Bin)
+			string decoded{to_string(std::move(_Codes))};
+			return to_binary(decoded);
+		}
+		static string to_binary(size_t _Long)
+		{
+			string out;
+			while (_Long >= 1)
 			{
-				out = (out * 2u) + static_cast<size_t>(b);
+				out += std::to_string(_Long % 2);
+				_Long /= 2;
 			}
+
+			if (out.size() < _Size)
+			{
+				auto size_diff{ _Size - out.size() };
+				out.reserve(size_diff);
+				helpers::do_n{ size_diff, [&] { out.push_back('0'); } };
+			}
+			string reversed_out;
+			move(rbegin(out), rend(out), back_inserter(reversed_out));
+			return reversed_out;
+		}
+	public:
+		static string to_string(const string& _Bin)
+		{
+			auto it_bad{ find_if_not(begin(_Bin), end(_Bin), [](char c)
+				{
+					return isdigit(c) != 0 && (int)(c - '0') < 2;
+				}) };
+
+			assert(it_bad == end(_Bin) && "Binary string can contain only 1s and 0s");
+				
+
+			string out;
+			for (auto it{ std::begin(_Bin) }; it != std::end(_Bin); it += _Size / 2)
+			{
+				unsigned char dcd_ch{ static_cast<unsigned char>(std::bitset<_Size>{std::string{it, it + _Size}}.to_ullong()) };
+				out += dcd_ch;
+			}
+			return out;
+		}
+		static string to_string(const ascll_string& _Codes)
+		{
+			string out;
+			transform(begin(_Codes), end(_Codes), back_inserter(out), [](size_t _Code)
+				{
+					return static_cast<unsigned char>(_Code);
+				});
+			return out;
+		}
+		string to_string() const
+		{
+			return to_string(_Bin_Str);
+		}
+	public:
+		static size_t to_ullong(const string& _Bin)
+		{
+			return std::bitset<_Size>{_Bin}.to_ullong();
+		}
+		ascll_string to_ascll_string() const
+		{
+			ascll_string out;
+			string decoded_str{ to_string(_Bin_Str) };
+			transform(begin(decoded_str), end(decoded_str), back_inserter(out), [](char c)
+				{
+					return static_cast<size_t>(c);
+				});
 			return out;
 		}
 		size_t to_ullong() const
 		{
-			return size_t{ to_ullong(_Mask) };
+			return to_ullong(_Bin_Str);
 		}
-		/*Convert binary container do a string of 1s and 0s*/
-		static string to_string(const binary_container& _Bin)
-		{
-			string out;
-			transform(begin(_Bin), end(_Bin), back_inserter(out), [](auto b) {return *std::to_string(static_cast<size_t>(b)).c_str(); });
-			return out;
-		}
-		/*Convert this object's mask to a string of binary container*/
-		string to_string(_Converter_Type _Ty = _Binary) const
-		{
-			switch (_Ty)
-			{
-			case _Converter_Type::_Binary: return string{ to_string(_Mask) };
-										 break;
-			case _Converter_Type::_String: return string{ to_string(_Mask, (_Size <= 16) ?  _Size / 2 : _Size / 8) };
-										 break;
-			case _Converter_Type::_Ullong: return string{std::to_string(to_ullong(_Mask))};
-			default:
-				break;
-			}
-		}
-		static string to_string(const binary_container& _Bin, size_t _Bin_Size)
-		{
-			string out;
-			for (auto it{ begin(_Bin) }; it != end(_Bin); it += _Bin_Size)
-			{
-				auto ullong{ to_ullong(binary_container{it, it + _Bin_Size}) };
-				unsigned char ch{ static_cast<unsigned char>(ullong) };
-				out += ch;
-			}
-			return out;
-		}
-
 	};
 	
 	

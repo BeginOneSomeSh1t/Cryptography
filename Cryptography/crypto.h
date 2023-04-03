@@ -218,13 +218,14 @@ namespace crypto
 		}
 
 		
-
-		std::binary<16> bin_msg{ _Msg };
-		auto ullong_msg{ bin_msg.to_ullong() };
-
-		size_t c{ static_cast<size_t>(std::fmod(std::pow(ullong_msg, e), phi_mod)) };
-
-		return std::make_tuple(e, d, phi_mod, c);
+		//binary representation of a message
+		std::binary<32> bin_msg{ _Msg };
+		
+		/*auto ullong_msg{ bin_msg.to_ullong() };
+		
+		size_t c{ static_cast<size_t>(std::fmod(std::pow(ullong_msg, e), phi_mod)) };*/
+		
+		return std::make_tuple(e, d, phi_mod, 3/*c*/);
 	}
 
 }
