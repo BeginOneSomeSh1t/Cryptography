@@ -1,15 +1,20 @@
 #pragma once
-
+#include <vector>
+#include <string>
 
 namespace helpers
 {
+	/*Calls a passed lambda object n times with passing an index*/
 	struct do_n
 	{
-		template<typename _Func, typename..._Ts>
-		do_n(size_t _Times, _Func _Lambd, _Ts&&..._Args)
+		size_t i;
+		template<typename _Func>
+		do_n(size_t _Times, _Func _Lambd)
+			:
+			i{0u}
 		{
-			for (size_t i{ 0u }; i < _Times; ++i)
-				_Lambd(std::forward<_Ts>(_Args)...);
+			for (; i < _Times; ++i)
+				_Lambd(i);
 		}
 	};
 }

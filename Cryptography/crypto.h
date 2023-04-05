@@ -192,40 +192,74 @@ namespace crypto
 		return prev_res;
 	}
 
-	/*tuple<public key, private key, mod, cipher>*/
-	using rsa_bundle = std::tuple<size_t, size_t, size_t, size_t>;
+	/*tuple<cipher text, pub_key, pri_key, mod>*/
+	using rsa_bundle = std::tuple<std::vector<int>, size_t, size_t, size_t>;
 
 	static rsa_bundle rsa_cipher(const std::string& _Msg)
 	{
-		size_t p{ 89u }, q{ 101u };
+		std::distribute_prime_numbers r_primes_dist{ 250u };
+		size_t p{ r_primes_dist.random()}, q{ r_primes_dist.random() };
+
 		auto n{ p * q };
-		auto phi_mod{ std::totient(n) };
-
-		size_t e{ 1323u };
-
-		size_t d{ 0u };
-
-		std::modulus<size_t> mod;
-
-		for (size_t i{ 1u }, m{ 0u }; true; ++i)
-		{
-			m = mod(i * e, phi_mod);
-			if (m == 1)
-			{
-				d = i;
+		auto fi{ (p - 1) * (q - 1)};
+		
+		auto e{ 2u };
+		while (true)
+			if (std::gcd(e, fi) == 1)
 				break;
-			}
-		}
+			else
+				e++;
 
+		auto d{ 2u };
+		while (true)
+			if ((d * e) % fi == 1)
+				break;
+			else
+				d++;
 		
-		//binary representation of a message
-		std::binary<32> bin_msg{ _Msg };
-		
-		/*auto ullong_msg{ bin_msg.to_ullong() };
-		
-		size_t c{ static_cast<size_t>(std::fmod(std::pow(ullong_msg, e), phi_mod)) };*/
-		
-		return std::make_tuple(e, d, phi_mod, 3/*c*/);
+		auto encrypt{ [&e, &n](auto _Ascll_Num)
+			mutable
+			{
+				auto loc_e{e};
+				std::size_t encrypted{1u};
+				while (loc_e--)
+				{
+					encrypted *= _Ascll_Num;
+					encrypted %= n;
+				}
+				return encrypted;
+			} };
+
+		std::vector<int> form;
+		form.reserve(_Msg.size());
+		for (auto& let : _Msg)
+			form.push_back(encrypt((int)let));
+
+	
+		return std::make_tuple(form, e, d, n);
+	}
+
+	static std::string rsa_cipher(const rsa_bundle& _Bundle)
+	{
+		auto [form, e, d, n] {_Bundle};
+
+		auto decrypt{ [d = d, n = n](auto _Encrypted)
+			{
+				auto loc_d{d};
+				std::size_t decrypted{1u};
+				while (loc_d--)
+				{
+					decrypted *= _Encrypted;
+					decrypted %= n;
+				}
+				return decrypted;
+			} };
+
+		std::string out;
+		for (auto& num : form)
+			out += decrypt(num);
+
+		return out;
 	}
 
 }
