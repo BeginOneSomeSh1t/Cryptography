@@ -29,7 +29,8 @@ int main()
 			std::ofstream fout{ "Layout.txt" };
 			if (!fout.is_open())
 			{
-				std::cout << "File error";
+				std::cout << "File error, press enter to continue";
+				get_char();
 				return 1;
 			}
 
@@ -44,6 +45,8 @@ int main()
 				<< private_key << ' ' << n;
 
 			std::cout << "Pass your friend the encrypted file. Bye!";
+			std::cout << "\nPress enter to continue...";
+			get_char();
 			fout.close();
 			return 0;
 
@@ -67,7 +70,8 @@ int main()
 			std::ifstream fin{ path.c_str()};
 			if (!fin.is_open())
 			{
-				std::cout << "File error.";
+				std::cout << "File error. Press enter to continue";
+				get_char();
 				return 1;
 			}
 
@@ -95,6 +99,8 @@ int main()
 
 			std::cout << "The decrypted message is: " << decrypted_msg;
 			std::cout << "Bye!";
+			std::cout << "\nPress enter to continue...";
+			get_char();
 			return 1;
 		}
 			break;
@@ -102,4 +108,5 @@ int main()
 			break;
 		}
 	}
+
 }
