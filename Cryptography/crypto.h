@@ -262,6 +262,76 @@ namespace crypto
 		return out;
 	}
 
+	struct otp_bundle
+	{
+		/*Can be either cipher text or a plain text*/
+		std::string _Text;
+		std::string _Keyword;
+		bool _Is_Cipher{ false };
+	public:
+		void generate_keyword(size_t _Str_Size) 
+		{
+			std::random_device r;
+			std::uniform_int_distribution<size_t> string_size_dist{ _Str_Size, _Str_Size + 20 };
+			std::uniform_int_distribution<int> ASCLL_letter_dist{ 0, 255 };
+
+			helpers::do_n{ string_size_dist(r), [&](auto i)
+				{
+					_Keyword += static_cast<char>(ASCLL_letter_dist(r));
+				} };
+		}
+	};
+
+	static otp_bundle otp_cipher(const std::string& _Msg)
+	{
+		otp_bundle out;
+		out.generate_keyword(_Msg.size());
+
+		std::string& cipher_text{ out._Text };
+		cipher_text.reserve(_Msg.size());
+
+		helpers::do_n{ _Msg.size(), [&](auto i)
+			{
+				cipher_text.push_back(_Msg[i] + out._Keyword[i]);
+			} };
+
+		out._Is_Cipher = true;
+
+		return out;
+	}
+	static otp_bundle otp_cipher(const std::string& _Msg, const std::string& _Keyword)
+	{
+		otp_bundle out;
+		out._Keyword = _Keyword;
+		out._Is_Cipher = true;
+
+		std::string& cipher_text{ out._Text };
+		cipher_text.reserve(_Msg.size());
+
+		helpers::do_n{ _Msg.size(), [&](auto i)
+			{
+				cipher_text.push_back(_Msg[i] + out._Keyword[i]);
+			} };
+		return out;
+	}
+	
+	static std::string otp_cipher(const otp_bundle& _Otp)
+	{
+		assert(_Otp._Is_Cipher && "Passed otp_bundle should contains a cipher text");
+		std::string out;
+		out.reserve(_Otp._Text.size());
+		helpers::do_n{ _Otp._Text.size(), [&](auto i)
+			{
+				out.push_back(_Otp._Text[i] - _Otp._Keyword[i]);
+			} };
+
+		return out;
+	}
+	static std::string otp_cipher(std::string& _Cipher, std::string& _Keyword)
+	{
+		return otp_cipher({ std::move(_Cipher), std::move(_Keyword), true });
+	}
+
 }
 
 
